@@ -8,7 +8,7 @@ SETUP_GUIDE.md - Comprehensive Setup Guide
 
 ### Step 1: Clone & Setup
 ```bash
-git clone https://github.com/yourusername/family-budget-app.git
+git clone https://github.com/Rikiza89/family-budget-app.git
 cd family-budget-app
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -48,7 +48,7 @@ mkdir family-budget-project
 cd family-budget-project
 
 # Clone repository
-git clone https://github.com/yourusername/family-budget-app.git .
+git clone https://github.com/Rikiza89/family-budget-app.git .
 
 # Create virtual environment
 python -m venv venv
@@ -411,4 +411,5 @@ After successful setup:
 ---
 
 Version: 1.0.0
+
 Last Updated: 2025
