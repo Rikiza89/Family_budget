@@ -1,10 +1,3 @@
-# ============================================================================
-# Contributing Guidelines - CONTRIBUTING.md
-# ============================================================================
-"""
-Save as: CONTRIBUTING.md
-"""
-
 # Contributing to Family Budget App
 
 We love your input! We want to make contributing to this project as easy and transparent as possible.
@@ -46,4 +39,5 @@ Include:
 
 - Use clear, descriptive titles
 - Provide use case and benefits
+
 - List any related libraries or dependencies
