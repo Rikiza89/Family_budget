@@ -6,7 +6,7 @@
 # Total: ~2 minutes to get running
 
 # 1. Clone and navigate
-git clone https://github.com/yourusername/family-budget-app.git
+git clone https://github.com/Rikiza89/family-budget-app.git
 cd family-budget-app
 
 # 2. Setup environment
@@ -445,7 +445,7 @@ docker-compose down -v
 ### Basic Git Workflow
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/family-budget-app.git
+git clone https://github.com/Rikiza89/family-budget-app.git
 
 # Create branch
 git checkout -b feature/new-feature
@@ -981,5 +981,6 @@ git merge feature/your-feature
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024  
+**Last Updated**: 10/10/2025 
+
 **Status**: Complete Reference
