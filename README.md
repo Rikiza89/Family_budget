@@ -35,7 +35,7 @@ A comprehensive Django web application for managing family budgets, tracking exp
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/family-budget-app.git
+git clone https://github.com/Rikiza89/family-budget-app.git
 cd family-budget-app
 ```
 
@@ -302,7 +302,8 @@ For issues, questions, or suggestions:
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2024  
+**Last Updated**: 10/10/2025  
 **Python Version**: 3.8+
+
 
 ---
