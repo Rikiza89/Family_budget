@@ -66,7 +66,7 @@ A full-featured Django web application for managing family budgets with the foll
 ### Installation (5 minutes)
 ```bash
 # Clone repository
-git clone <repository-url>
+git clone <https://github.com/Rikiza89/Family_budget.git>
 cd family-budget-app
 
 # Create virtual environment
@@ -462,5 +462,6 @@ MIT License - See LICENSE file for details
 ---
 
 For questions or issues, please refer to the documentation or open a GitHub issue.
+
 
 Thank you for using Family Budget App! 🎉
