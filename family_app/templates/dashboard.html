@@ -1,0 +1,158 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Family Budget{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5">Dashboard</h1>
+        <p class="lead text-muted">{{ family.name }} - {{ month_year }}</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="card-text">Income</p>
+                        <h3 class="card-title">${{ income_total }}</h3>
+                    </div>
+                    <i class="bi bi-arrow-up-circle" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="card-text">Expenses</p>
+                        <h3 class="card-title">${{ expense_total }}</h3>
+                    </div>
+                    <i class="bi bi-arrow-down-circle" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="card-text">Savings</p>
+                        <h3 class="card-title">${{ saving_total }}</h3>
+                    </div>
+                    <i class="bi bi-piggy-bank" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="card-text">Balance</p>
+                        <h3 class="card-title">${{ balance }}</h3>
+                    </div>
+                    <i class="bi bi-wallet2" style="font-size: 2.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    {% if budget_alerts %}
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Budget Alerts</h5>
+            </div>
+            <div class="card-body">
+                {% for alert in budget_alerts %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>{{ alert.category }}</span>
+                        <span class="badge bg-danger">{{ alert.percentage|floatformat:1 }}%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" style="width: {{ alert.percentage }}%"></div>
+                    </div>
+                    <small class="text-muted">${{ alert.spent }} / ${{ alert.limit }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_events %}
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-info">
+                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Upcoming Events</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for event in upcoming_events %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ event.name }}</h6>
+                                <small class="text-muted">{{ event.event_date }}</small>
+                            </div>
+                            <span class="badge {% if event.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ event.get_type_display }}: ${{ event.amount }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Category Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in category_data %}
+                        <tr>
+                            <td>{{ cat.name }}</td>
+                            <td>
+                                <span class="badge {% if cat.type == 'income' %}bg-success{% elif cat.type == 'expense' %}bg-danger{% else %}bg-info{% endif %}">
+                                    {{ cat.type|title }}
+                                </span>
+                            </td>
+                            <td>${{ cat.total }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No transactions this month</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Logs - Family Budget{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-5">Transaction Logs</h1>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add New Log</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ log_form.as_p }}
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle"></i> Add Log
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Filter by Date</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-2">
+                    <div class="col-md-5">
+                        {{ date_form.start_date }}
+                    </div>
+                    <div class="col-md-5">
+                        {{ date_form.end_date }}
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-info w-100">Filter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Logs</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td>{{ log.date }}</td>
+                                <td>
+                                    <span class="badge {% if log.category.type == 'income' %}bg-success{% elif log.category.type == 'expense' %}bg-danger{% else %}bg-info{% endif %}">
+                                        {{ log.category.name }}
+                                    </span>
+                                </td>
+                                <td class="fw-bold">${{ log.amount }}</td>
+                                <td>{{ log.description|truncatewords:5 }}</td>
+                                <td>
+                                    <a href="{% url 'delete_log' log.id %}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No logs found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
