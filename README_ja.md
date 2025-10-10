@@ -35,7 +35,7 @@
 
 1. **リポジトリをクローン**
 ```bash
-git clone https://github.com/yourusername/family-budget-app.git
+git clone https://github.com/Rikiza89/family-budget-app.git
 cd family-budget-app
 ```
 
@@ -302,7 +302,8 @@ python manage.py runserver 8001
 ---
 
 **バージョン**: 1.0.0  
-**最終更新**: 2024年  
+**最終更新**: 2025年10月10日
 **Pythonバージョン**: 3.8以上
+
 
 ---
