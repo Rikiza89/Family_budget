@@ -1,4 +1,3 @@
-# README_ja.md
 
 # 家族予算管理アプリ
 
@@ -307,3 +306,4 @@ python manage.py runserver 8001
 
 
 ---
+
