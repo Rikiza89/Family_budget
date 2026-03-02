@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% load static %}
 
@@ -8,7 +7,7 @@
 <div class="row mb-4">
     <div class="col-md-12">
         <h1 class="display-5">Dashboard</h1>
-        <p class="lead text-muted">{{ family.name }} - {{ month_year }}</p>
+        <p class="lead text-muted">{{ family.name }} &mdash; {{ month_year }}</p>
     </div>
 </div>
 
@@ -18,10 +17,10 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="card-text">Income</p>
-                        <h3 class="card-title">${{ income_total }}</h3>
+                        <p class="card-text mb-1">Income</p>
+                        <h3 class="card-title mb-0">${{ income_total }}</h3>
                     </div>
-                    <i class="bi bi-arrow-up-circle" style="font-size: 2.5rem;"></i>
+                    <i class="bi bi-arrow-up-circle" style="font-size: 2.5rem; opacity: 0.8;"></i>
                 </div>
             </div>
         </div>
@@ -31,10 +30,10 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="card-text">Expenses</p>
-                        <h3 class="card-title">${{ expense_total }}</h3>
+                        <p class="card-text mb-1">Expenses</p>
+                        <h3 class="card-title mb-0">${{ expense_total }}</h3>
                     </div>
-                    <i class="bi bi-arrow-down-circle" style="font-size: 2.5rem;"></i>
+                    <i class="bi bi-arrow-down-circle" style="font-size: 2.5rem; opacity: 0.8;"></i>
                 </div>
             </div>
         </div>
@@ -44,23 +43,23 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="card-text">Savings</p>
-                        <h3 class="card-title">${{ saving_total }}</h3>
+                        <p class="card-text mb-1">Savings</p>
+                        <h3 class="card-title mb-0">${{ saving_total }}</h3>
                     </div>
-                    <i class="bi bi-piggy-bank" style="font-size: 2.5rem;"></i>
+                    <i class="bi bi-piggy-bank" style="font-size: 2.5rem; opacity: 0.8;"></i>
                 </div>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-lg-3">
-        <div class="card text-white bg-primary h-100">
+        <div class="card text-white {% if balance >= 0 %}bg-primary{% else %}bg-dark{% endif %} h-100">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <p class="card-text">Balance</p>
-                        <h3 class="card-title">${{ balance }}</h3>
+                        <p class="card-text mb-1">Balance</p>
+                        <h3 class="card-title mb-0">${{ balance }}</h3>
                     </div>
-                    <i class="bi bi-wallet2" style="font-size: 2.5rem;"></i>
+                    <i class="bi bi-wallet2" style="font-size: 2.5rem; opacity: 0.8;"></i>
                 </div>
             </div>
         </div>
@@ -68,23 +67,35 @@
 </div>
 
 <div class="row g-3">
-    {% if budget_alerts %}
+    {% if budget_alerts or budget_warnings %}
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header bg-warning">
+            <div class="card-header {% if budget_alerts %}bg-danger text-white{% else %}bg-warning{% endif %}">
                 <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Budget Alerts</h5>
             </div>
             <div class="card-body">
                 {% for alert in budget_alerts %}
                 <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>{{ alert.category }}</span>
-                        <span class="badge bg-danger">{{ alert.percentage|floatformat:1 }}%</span>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold">{{ alert.category }}</span>
+                        <span class="badge bg-danger">Exceeded</span>
                     </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-danger" style="width: {{ alert.percentage }}%"></div>
+                    <div class="progress mb-1">
+                        <div class="progress-bar bg-danger" style="width: 100%">100%+</div>
                     </div>
-                    <small class="text-muted">${{ alert.spent }} / ${{ alert.limit }}</small>
+                    <small class="text-muted">${{ alert.spent }} spent / ${{ alert.limit }} limit</small>
+                </div>
+                {% endfor %}
+                {% for warn in budget_warnings %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-semibold">{{ warn.category }}</span>
+                        <span class="badge bg-warning text-dark">{{ warn.percentage|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress mb-1">
+                        <div class="progress-bar bg-warning" style="width: {{ warn.percentage }}%"></div>
+                    </div>
+                    <small class="text-muted">${{ warn.spent }} spent / ${{ warn.limit }} limit</small>
                 </div>
                 {% endfor %}
             </div>
@@ -95,17 +106,17 @@
     {% if upcoming_events %}
     <div class="col-lg-6">
         <div class="card">
-            <div class="card-header bg-info">
-                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Upcoming Events</h5>
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Upcoming Events (Next 30 Days)</h5>
             </div>
-            <div class="card-body">
-                <div class="list-group">
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
                     {% for event in upcoming_events %}
                     <div class="list-group-item">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">{{ event.name }}</h6>
-                                <small class="text-muted">{{ event.event_date }}</small>
+                                <h6 class="mb-0">{{ event.name }}</h6>
+                                <small class="text-muted">{{ event.event_date|date:"l, M j" }}</small>
                             </div>
                             <span class="badge {% if event.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
                                 {{ event.get_type_display }}: ${{ event.amount }}
@@ -122,15 +133,15 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Category Breakdown</h5>
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Category Breakdown &mdash; {{ month_year }}</h5>
             </div>
-            <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
                         <tr>
                             <th>Category</th>
                             <th>Type</th>
-                            <th>Amount</th>
+                            <th class="text-end">Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -142,11 +153,15 @@
                                     {{ cat.type|title }}
                                 </span>
                             </td>
-                            <td>${{ cat.total }}</td>
+                            <td class="text-end fw-semibold">${{ cat.total }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="3" class="text-center text-muted">No transactions this month</td>
+                            <td colspan="3" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                                No transactions this month &mdash;
+                                <a href="{% url 'logs' %}">add your first log</a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

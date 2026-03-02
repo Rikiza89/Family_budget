@@ -16,4 +16,5 @@ urlpatterns = [
     path('events/delete/<int:event_id>/', views.delete_event, name='delete_event'),
     path('settings/', views.family_settings, name='family_settings'),
     path('settings/delete-category/<int:category_id>/', views.delete_category, name='delete_category'),
+    path('analytics/', views.ai_analytics, name='ai_analytics'),
 ]
