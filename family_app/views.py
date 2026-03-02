@@ -14,10 +14,10 @@ from .models import Family, Member, Log, Category, BudgetLimit, RecurringLog, Fu
 from .forms import LogForm, CategoryForm, BudgetLimitForm, RecurringLogForm, FutureEventForm, DateRangeForm, AIAnalyticsForm
 
 try:
-    import anthropic as _anthropic_module
-    _ANTHROPIC_AVAILABLE = True
+    import google.generativeai as _genai_module
+    _GEMINI_AVAILABLE = True
 except ImportError:
-    _ANTHROPIC_AVAILABLE = False
+    _GEMINI_AVAILABLE = False
 
 
 def get_member_and_family(request):
@@ -614,16 +614,16 @@ def ai_analytics(request):
                 status=400,
             )
 
-        if not _ANTHROPIC_AVAILABLE:
+        if not _GEMINI_AVAILABLE:
             return JsonResponse(
-                {'error': 'The anthropic package is not installed. Run: pip install anthropic'},
+                {'error': 'The google-generativeai package is not installed. Run: pip install google-generativeai'},
                 status=503,
             )
 
-        api_key = django_settings.ANTHROPIC_API_KEY
+        api_key = django_settings.GEMINI_API_KEY
         if not api_key:
             return JsonResponse(
-                {'error': 'ANTHROPIC_API_KEY is not configured. '
+                {'error': 'GEMINI_API_KEY is not configured. '
                           'Add it to your .env file and restart the server.'},
                 status=503,
             )
@@ -631,17 +631,16 @@ def ai_analytics(request):
         prompt = _build_prompt(data, topics, custom_question)
 
         try:
-            client = _anthropic_module.Anthropic(api_key=api_key)
-            response = client.messages.create(
-                model='claude-haiku-4-5-20251001',
-                max_tokens=2048,
-                system=(
+            _genai_module.configure(api_key=api_key)
+            model = _genai_module.GenerativeModel(
+                model_name='gemini-1.5-flash',
+                system_instruction=(
                     "You are a helpful personal finance advisor for a family budget app. "
                     "Provide concise, actionable analysis in markdown format."
                 ),
-                messages=[{'role': 'user', 'content': prompt}],
             )
-            analysis_text = response.content[0].text
+            response = model.generate_content(prompt)
+            analysis_text = response.text
         except Exception as exc:
             return JsonResponse({'error': f'AI service error: {exc}'}, status=502)
 

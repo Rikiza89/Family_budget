@@ -116,6 +116,9 @@ LOGOUT_REDIRECT_URL = 'login'
 # Anthropic API key for AI Analytics feature
 ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
 
+# Gemini API key for AI Analytics feature
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+
 # Email Configuration (optional)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Console output for development
 
