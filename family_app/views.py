@@ -5,17 +5,24 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.db import IntegrityError
 from django.db.models import Sum, Q
 from datetime import datetime, timedelta, date
 from decimal import Decimal
 from .models import Family, Member, Log, Category, BudgetLimit, RecurringLog, FutureEvent
 from .forms import LogForm, CategoryForm, BudgetLimitForm, RecurringLogForm, FutureEventForm, DateRangeForm
 
+
+def get_member_and_family(request):
+    """Helper to retrieve the member and family for the current user."""
+    member = Member.objects.get(user=request.user)
+    return member, member.family
+
+
 @login_required
 def dashboard(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
@@ -26,7 +33,7 @@ def dashboard(request):
 
     # Get logs for current month
     logs = Log.objects.filter(family=family, date__range=[month_start, month_end])
-    
+
     # Calculate totals
     income_total = logs.filter(category__type='income').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
     expense_total = logs.filter(category__type='expense').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
@@ -41,18 +48,23 @@ def dashboard(request):
         if total != 0:
             category_data.append({'name': cat.name, 'type': cat.type, 'total': total})
 
-    # Budget alerts
+    # Budget alerts and near-warnings
     budget_alerts = []
+    budget_warnings = []
     budgets = BudgetLimit.objects.filter(family=family)
     for budget in budgets:
         spent = logs.filter(category=budget.category).aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
-        if spent >= budget.amount_limit:
-            budget_alerts.append({
-                'category': budget.category.name,
-                'limit': budget.amount_limit,
-                'spent': spent,
-                'percentage': (spent / budget.amount_limit * 100) if budget.amount_limit else 0
-            })
+        percentage = float(spent / budget.amount_limit * 100) if budget.amount_limit else 0
+        entry = {
+            'category': budget.category.name,
+            'limit': budget.amount_limit,
+            'spent': spent,
+            'percentage': min(percentage, 100),
+        }
+        if percentage >= 100:
+            budget_alerts.append(entry)
+        elif percentage >= 80:
+            budget_warnings.append(entry)
 
     # Upcoming events
     upcoming_events = FutureEvent.objects.filter(
@@ -69,16 +81,17 @@ def dashboard(request):
         'balance': balance,
         'category_data': category_data,
         'budget_alerts': budget_alerts,
+        'budget_warnings': budget_warnings,
         'upcoming_events': upcoming_events,
         'month_year': month_start.strftime('%B %Y'),
     }
     return render(request, 'dashboard.html', context)
 
+
 @login_required
 def logs_view(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
@@ -96,6 +109,7 @@ def logs_view(request):
 
     if request.method == 'POST':
         log_form = LogForm(request.POST)
+        log_form.fields['category'].queryset = Category.objects.filter(family=family)
         if log_form.is_valid():
             log = log_form.save(commit=False)
             log.family = family
@@ -109,31 +123,46 @@ def logs_view(request):
     categories = Category.objects.filter(family=family)
     log_form.fields['category'].queryset = categories
 
+    # Compute totals and count for currently filtered logs
+    log_count = logs.count()
+    filtered_income = logs.filter(category__type='income').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+    filtered_expense = logs.filter(category__type='expense').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+    filtered_saving = logs.filter(category__type='saving').aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+
     context = {
         'logs': logs[:100],
+        'log_count': log_count,
         'log_form': log_form,
         'date_form': form,
         'family': family,
+        'filtered_income': filtered_income,
+        'filtered_expense': filtered_expense,
+        'filtered_saving': filtered_saving,
+        'is_truncated': log_count > 100,
     }
     return render(request, 'logs.html', context)
 
+
 @login_required
 def delete_log(request, log_id):
+    if request.method != 'POST':
+        return redirect('logs')
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
         log = Log.objects.get(id=log_id, family=family)
         log.delete()
         messages.success(request, "Log deleted successfully!")
-    except (Member.DoesNotExist, Log.DoesNotExist):
+    except Member.DoesNotExist:
+        messages.error(request, "You are not assigned to a family.")
+    except Log.DoesNotExist:
         messages.error(request, "Log not found.")
     return redirect('logs')
+
 
 @login_required
 def budget_view(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
@@ -150,23 +179,24 @@ def budget_view(request):
             category=budget.category,
             date__range=[month_start, month_end]
         ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
-        
+
         remaining = budget.amount_limit - spent
-        percentage = (spent / budget.amount_limit * 100) if budget.amount_limit else 0
-        
+        percentage = float(spent / budget.amount_limit * 100) if budget.amount_limit else 0
+
         budget_data.append({
             'budget': budget,
             'spent': spent,
             'remaining': remaining,
-            'percentage': percentage,
-            'status': 'danger' if percentage >= 100 else 'warning' if percentage >= 80 else 'success'
+            'percentage': min(percentage, 100),
+            'over_budget': percentage > 100,
+            'status': 'danger' if percentage >= 100 else 'warning' if percentage >= 80 else 'success',
         })
 
     if request.method == 'POST':
         budget_form = BudgetLimitForm(request.POST)
         categories = Category.objects.filter(family=family)
         budget_form.fields['category'].queryset = categories
-        
+
         if budget_form.is_valid():
             budget = budget_form.save(commit=False)
             budget.family = family
@@ -174,7 +204,7 @@ def budget_view(request):
                 budget.save()
                 messages.success(request, "Budget limit added!")
                 return redirect('budget')
-            except:
+            except IntegrityError:
                 messages.error(request, "This category already has a budget limit.")
     else:
         budget_form = BudgetLimitForm()
@@ -188,23 +218,27 @@ def budget_view(request):
     }
     return render(request, 'budget.html', context)
 
+
 @login_required
 def delete_budget(request, budget_id):
+    if request.method != 'POST':
+        return redirect('budget')
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
         budget = BudgetLimit.objects.get(id=budget_id, family=family)
         budget.delete()
         messages.success(request, "Budget deleted!")
-    except (Member.DoesNotExist, BudgetLimit.DoesNotExist):
+    except Member.DoesNotExist:
+        messages.error(request, "You are not assigned to a family.")
+    except BudgetLimit.DoesNotExist:
         messages.error(request, "Budget not found.")
     return redirect('budget')
+
 
 @login_required
 def recurring_view(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
@@ -215,7 +249,7 @@ def recurring_view(request):
         rec_form = RecurringLogForm(request.POST)
         categories = Category.objects.filter(family=family)
         rec_form.fields['category'].queryset = categories
-        
+
         if rec_form.is_valid():
             rec = rec_form.save(commit=False)
             rec.family = family
@@ -234,27 +268,32 @@ def recurring_view(request):
     }
     return render(request, 'recurring.html', context)
 
+
 @login_required
 def delete_recurring(request, recurring_id):
+    if request.method != 'POST':
+        return redirect('recurring')
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
         recurring = RecurringLog.objects.get(id=recurring_id, family=family)
         recurring.delete()
         messages.success(request, "Recurring log deleted!")
-    except (Member.DoesNotExist, RecurringLog.DoesNotExist):
+    except Member.DoesNotExist:
+        messages.error(request, "You are not assigned to a family.")
+    except RecurringLog.DoesNotExist:
         messages.error(request, "Recurring log not found.")
     return redirect('recurring')
+
 
 @login_required
 def events_view(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
 
+    today = date.today()
     events = FutureEvent.objects.filter(family=family).order_by('event_date')
 
     if request.method == 'POST':
@@ -272,26 +311,31 @@ def events_view(request):
         'events': events,
         'event_form': event_form,
         'family': family,
+        'today': today,
     }
     return render(request, 'events.html', context)
 
+
 @login_required
 def delete_event(request, event_id):
+    if request.method != 'POST':
+        return redirect('events')
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
         event = FutureEvent.objects.get(id=event_id, family=family)
         event.delete()
         messages.success(request, "Event deleted!")
-    except (Member.DoesNotExist, FutureEvent.DoesNotExist):
+    except Member.DoesNotExist:
+        messages.error(request, "You are not assigned to a family.")
+    except FutureEvent.DoesNotExist:
         messages.error(request, "Event not found.")
     return redirect('events')
+
 
 @login_required
 def family_settings(request):
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
     except Member.DoesNotExist:
         messages.error(request, "You are not assigned to a family.")
         return redirect('login')
@@ -308,8 +352,8 @@ def family_settings(request):
                 category.save()
                 messages.success(request, "Category added!")
                 return redirect('family_settings')
-            except:
-                messages.error(request, "Category already exists!")
+            except IntegrityError:
+                messages.error(request, "A category with that name already exists.")
     else:
         cat_form = CategoryForm()
 
@@ -321,14 +365,18 @@ def family_settings(request):
     }
     return render(request, 'family_settings.html', context)
 
+
 @login_required
 def delete_category(request, category_id):
+    if request.method != 'POST':
+        return redirect('family_settings')
     try:
-        member = Member.objects.get(user=request.user)
-        family = member.family
+        member, family = get_member_and_family(request)
         category = Category.objects.get(id=category_id, family=family)
         category.delete()
         messages.success(request, "Category deleted!")
-    except (Member.DoesNotExist, Category.DoesNotExist):
+    except Member.DoesNotExist:
+        messages.error(request, "You are not assigned to a family.")
+    except Category.DoesNotExist:
         messages.error(request, "Category not found.")
     return redirect('family_settings')

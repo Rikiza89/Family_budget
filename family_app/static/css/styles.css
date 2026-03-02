@@ -172,6 +172,11 @@ footer {
     }
 }
 
+/* Past events appear dimmed */
+.opacity-60 {
+    opacity: 0.6;
+}
+
 @media (max-width: 480px) {
     .container-fluid {
         padding-left: 0.5rem;
