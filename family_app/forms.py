@@ -105,6 +105,71 @@ class FutureEventForm(forms.ModelForm):
         return amount
 
 
+class AIAnalyticsForm(forms.Form):
+    PERIOD_CHOICES = [
+        ('1', 'Last month'),
+        ('3', 'Last 3 months'),
+        ('6', 'Last 6 months'),
+        ('12', 'Last year'),
+        ('custom', 'Custom range'),
+    ]
+
+    TOPIC_CHOICES = [
+        ('spending', 'Spending breakdown'),
+        ('budget', 'Budget performance'),
+        ('savings', 'Savings progress'),
+        ('income', 'Income trends'),
+        ('cashflow', 'Cash flow analysis'),
+        ('recommendations', 'Recommendations & tips'),
+    ]
+
+    period = forms.ChoiceField(
+        choices=PERIOD_CHOICES,
+        initial='3',
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label='Analysis period',
+    )
+    custom_start = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        label='From',
+    )
+    custom_end = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        label='To',
+    )
+    topics = forms.MultipleChoiceField(
+        choices=TOPIC_CHOICES,
+        initial=['spending', 'budget', 'recommendations'],
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        label='Topics to analyze',
+        required=False,
+    )
+    custom_question = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'e.g. "How can we cut our grocery bill?" or "Are we saving enough?"',
+        }),
+        label='Custom question (optional)',
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('period') == 'custom':
+            start = cleaned_data.get('custom_start')
+            end = cleaned_data.get('custom_end')
+            if not start:
+                self.add_error('custom_start', 'Required for custom range.')
+            if not end:
+                self.add_error('custom_end', 'Required for custom range.')
+            if start and end and end < start:
+                raise forms.ValidationError('End date cannot be before start date.')
+        return cleaned_data
+
+
 class DateRangeForm(forms.Form):
     start_date = forms.DateField(
         required=False,

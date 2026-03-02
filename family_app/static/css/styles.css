@@ -177,6 +177,72 @@ footer {
     opacity: 0.6;
 }
 
+/* AI Analytics: markdown output styling */
+.analysis-body {
+    line-height: 1.7;
+}
+
+.analysis-body h1,
+.analysis-body h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #dee2e6;
+    color: #0d6efd;
+}
+
+.analysis-body h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.4rem;
+    color: #343a40;
+}
+
+.analysis-body ul,
+.analysis-body ol {
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.analysis-body li {
+    margin-bottom: 0.25rem;
+}
+
+.analysis-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.analysis-body th {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 0.4rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+}
+
+.analysis-body td {
+    border: 1px solid #dee2e6;
+    padding: 0.35rem 0.75rem;
+}
+
+.analysis-body tr:nth-child(even) td {
+    background-color: #f8f9fa;
+}
+
+.analysis-body strong {
+    color: #212529;
+}
+
+.analysis-body p {
+    margin-bottom: 0.75rem;
+}
+
 @media (max-width: 480px) {
     .container-fluid {
         padding-left: 0.5rem;
